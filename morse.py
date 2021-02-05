@@ -2,6 +2,11 @@ import rstr, math, random
 import morse_talk as mtalk
 import numpy as np
 
+DEFAULT_SIGNAL_LENGTH = 4
+MIN_SIGNAL_LENGTH = 2.5
+MIN_SNR = 1
+MAX_SNR = 10
+
 def generate_morse_samples(msg, symlen, variance, drift):
     i = random.random()
     s = []
@@ -19,20 +24,20 @@ def generate_morse_samples(msg, symlen, variance, drift):
             s.extend([sym] * (l-1))
         else:
             s.extend([sym] * l)
-        symlen[sym] = max(2, symlen[sym] + random.gauss(0, drift))
+        symlen[sym] = max(MIN_SIGNAL_LENGTH, symlen[sym] + random.gauss(0, drift))
         i = i2
         sym2 = sym
     s.append(i-int(i))
     return np.array(s)
     
 def generate_signal(msg):
-    sl = 4
+    sl = DEFAULT_SIGNAL_LENGTH
     sv = random.gauss(0,1)
     symlen = [sl+random.gauss(0,sv), sl+random.gauss(0,sv)]
     variance = random.gauss(0,0.2)
     drift = random.gauss(0,0.1)
-    blur = random.gauss(0,0.5)
     samp = generate_morse_samples(msg, symlen, variance, drift)
+    #blur = random.gauss(0,0.5)
     #samp = np.convolve(samp, [blur,1,blur])
     return samp
 
@@ -50,7 +55,7 @@ def generate_signoise(msg, MAXSAMP):
         sig = sig[ofs:ofs+MAXSAMP]
     assert(sig.shape == (MAXSAMP,))
     noise = np.random.normal(0, 1, (MAXSAMP,))
-    snr = 1 + random.random() * 10
+    snr = MIN_SNR + random.random() * (MAX_SNR-MIN_SNR)
     return sig * snr + noise
 
 def generate_detection_training_sample(MAXSAMP, noempty=False):

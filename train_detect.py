@@ -56,7 +56,7 @@ def make_model(input_shape):
 
     gap = keras.layers.GlobalAveragePooling1D()(conv3)
 
-    output_layer = keras.layers.Dense(2, activation="softmax")(gap)
+    output_layer = keras.layers.Dense(1, activation="sigmoid")(gap)
 
     return keras.models.Model(inputs=input_layer, outputs=output_layer)
 
@@ -75,8 +75,8 @@ callbacks = [
 ]
 model.compile(
     optimizer="adam",
-    loss="sparse_categorical_crossentropy",
-    metrics=["sparse_categorical_accuracy"],
+    loss="binary_crossentropy",
+    metrics=["binary_accuracy"],
 )
 
 training_generator = DataGenerator()
