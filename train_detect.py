@@ -2,15 +2,16 @@
 import keras
 import morse
 import numpy as np
-import cw
+import cwmodel
 
+checkpoint_fn = "best_model.h5"
 
-model = cw.make_model()
+model = cwmodel.make_model()
 model.summary()
 
 callbacks = [
     keras.callbacks.ModelCheckpoint(
-        "best_model.h5", save_best_only=True, monitor="val_loss"
+        checkpoint_fn, save_best_only=True, monitor="val_loss"
     ),
     keras.callbacks.ReduceLROnPlateau(
         monitor="val_loss", factor=0.5, patience=20, min_lr=0.0001
@@ -22,9 +23,13 @@ model.compile(
     loss="binary_crossentropy",
     metrics=["binary_accuracy"],
 )
+try:
+    model.load_weights(checkpoint_fn)
+except:
+    print("could not load weights")
 
-training_generator = cw.DataGenerator()
-validation_generator = cw.DataGenerator()
+training_generator = cwmodel.DataGenerator()
+validation_generator = cwmodel.DataGenerator()
 
 epochs = 500
 

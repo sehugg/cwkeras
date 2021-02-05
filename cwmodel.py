@@ -3,8 +3,8 @@ import morse, keras
 import numpy as np
 
 channels = 1
-samples_per_sec = 50
-max_seconds = 20
+samples_per_sec = 100
+max_seconds = 5
 max_samples = max_seconds * samples_per_sec
 
 latent_dim = 20
@@ -21,7 +21,7 @@ class DataGenerator(keras.utils.Sequence):
 
     def __len__(self):
         'Denotes the number of batches per epoch'
-        return 64
+        return 100
 
     def __getitem__(self, index):
         'Generate one batch of data'
@@ -31,7 +31,7 @@ class DataGenerator(keras.utils.Sequence):
             msg, x = morse.generate_detection_training_sample(max_samples)
             x = np.reshape(x, (-1,1))
             x_train.append(x)
-            y_train.append(len(msg) > 0)
+            y_train.append(len(msg) > 0 and msg[0] != '~')
         return np.array(x_train), np.array(y_train)
 
     def on_epoch_end(self):
