@@ -12,17 +12,6 @@ latent_dim = 20
 num_decoder_tokens = 26+10+1
 TOKENS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ "
 
-NUM_TRAIN_SETS = 100
-x_train = []
-y_train = []
-for i in range(0,NUM_TRAIN_SETS):
-  msg, x = morse.generate_detection_training_sample(max_samples)
-  x = np.reshape(x, (-1,1))
-  x_train.append(x)
-  y_train.append(len(msg) > 0)
-x_train = np.array(x_train)
-y_train = np.array(y_train)
-
 class DataGenerator(keras.utils.Sequence):
     'Generates data for Keras'
     def __init__(self, batch_size=128):
@@ -72,7 +61,7 @@ def make_model(input_shape):
     return keras.models.Model(inputs=input_layer, outputs=output_layer)
 
 
-model = make_model(input_shape=x_train.shape[1:])
+model = make_model(input_shape=(max_samples,channels))
 model.summary()
 
 callbacks = [
@@ -94,17 +83,12 @@ training_generator = DataGenerator()
 validation_generator = DataGenerator()
 
 epochs = 500
-#batch_size = 32
 
 history = model.fit(
     x=training_generator,
     validation_data=validation_generator,
-    #x_train,
-    #y_train,
-    #batch_size=batch_size,
     epochs=epochs,
     callbacks=callbacks,
-    #validation_split=0.2,
     verbose=1,
 )
 

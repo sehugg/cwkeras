@@ -36,36 +36,39 @@ def generate_signal(msg):
     #samp = np.convolve(samp, [blur,1,blur])
     return samp
 
-def generate_noise(noise_shape):
-    noise = np.random.normal(0, random.random() * 0.5, noise_shape)
-    return noise
-
 def generate_signoise(msg, MAXSAMP):
     sig = generate_signal(msg)
     siglen = len(sig)
     if siglen < MAXSAMP:
+        # randomly center signal in window
         lpad = random.randrange(0, MAXSAMP-siglen)
         sig = np.pad(sig, (lpad, MAXSAMP-lpad-siglen), 'constant')
     else:
-        ofs = random.randrange(0, siglen-MAXSAMP)
+        # signal bigger than window, at least 50% must appear
+        sig = np.pad(sig, (MAXSAMP//2, MAXSAMP//2), 'constant')
+        ofs = random.randrange(0, siglen)
         sig = sig[ofs:ofs+MAXSAMP]
     assert(sig.shape == (MAXSAMP,))
-    noise = generate_noise((MAXSAMP,))
-    return sig + noise
+    noise = np.random.normal(0, 1, (MAXSAMP,))
+    snr = 1 + random.random() * 10
+    return sig * snr + noise
 
-def generate_detection_training_sample(MAXSAMP):
+def generate_detection_training_sample(MAXSAMP, noempty=False):
     msg = ''
     r = random.random()
-    if r > 0.5:
+    if r > 0.5 or noempty:
         msg = rstr.xeger(r'\d?[A-Z]{1,2}\d{1,4}[A-Z]{1,4}') # [A-R][A-R][0-9][0-9]
         #msg = rstr.xeger(r'[A-Z0-9 ]{2,15}')
     y = generate_signoise(msg, MAXSAMP)
-    return (msg,y)
+    normalized = (y-min(y))/(max(y)-min(y))
+    return (msg, normalized)
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    y = generate_signoise('CQ', 300)
-    #msg,y = generate_detection_training_sample(300)
-    #print(msg)
-    plt.plot(y)
+    #y = generate_signoise('CQ', 300)
+    fig, axs = plt.subplots(4, 4)
+    for i in range(0,16):
+        msg,y = generate_detection_training_sample(300, True)
+        print(msg)
+        axs[i%4,i//4].plot(y)
     plt.show()
