@@ -36,6 +36,7 @@ epochs = 500
 history = model.fit(
     x=training_generator,
     validation_data=validation_generator,
+    validation_steps=100,
     epochs=epochs,
     callbacks=callbacks,
     verbose=1,
