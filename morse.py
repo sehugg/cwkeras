@@ -4,7 +4,7 @@ import numpy as np
 
 DEFAULT_SIGNAL_LENGTH = 6   # 50 msec/dit at 20 wpm
 MIN_SIGNAL_LENGTH = 3       # 30 msec/dit at 40 wpm
-MIN_SNR = 1.5
+MIN_SNR = 2
 MAX_SNR = 10
 
 def generate_morse_samples(bits, symlen, variance, drift):
