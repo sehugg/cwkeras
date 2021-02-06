@@ -67,12 +67,14 @@ def generate_signoise(msg, MAXSAMP):
 def generate_detection_training_sample(MAXSAMP, noempty=False):
     msg = ''
     r = random.random()
-    if r > 0.5 or noempty: # callsign
-        msg = rstr.xeger(r'\d?[A-Z]{1,2}\d{1,4}[A-Z]{1,4}') # [A-R][A-R][0-9][0-9]
-        #msg = rstr.xeger(r'[A-Z0-9 ]{2,15}')
-    elif r > 0.25: # fake msg
+    if r > 0.5 or noempty:
+        # cq? callsign grid?
+        msg = rstr.xeger(r'(CQ )?\d?[A-Z]{1,2}\d{1,4}[A-Z]{1,4}( [A-R][A-R][0-9][0-9])?')
+    elif r > 0.25:
+        # fake msg
         msg = '~' + rstr.xeger(r'[0-1]{30,200}')
-    else: # no msg
+    else:
+        # no msg, just noise
         msg = ''
     y = generate_signoise(msg, MAXSAMP)
     #normalized = (y-min(y))/(max(y)-min(y))
@@ -86,5 +88,11 @@ if __name__ == "__main__":
     for i in range(0,16):
         msg,y = generate_detection_training_sample(500)
         print(msg)
-        axs[i%4,i//4].plot(y)
+        ax = axs[i%4,i//4]
+        ax.plot(y)
+        if len(msg) < 30:
+            ax.set_title(msg)
+        else:
+            ax.set_title(str(len(msg))+' bits')
+    plt.tight_layout()
     plt.show()
