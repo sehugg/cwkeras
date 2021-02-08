@@ -51,19 +51,19 @@ def make_model(input_shape = (max_samples,channels)):
 def make_trans_model(input_shape = (trans_samples,channels)):
     input_layer = keras.layers.Input(input_shape)
 
-    conv1 = keras.layers.Conv1D(filters=64, kernel_size=3, padding="same")(input_layer)
+    conv1 = keras.layers.Conv1D(filters=64, kernel_size=5, padding="same")(input_layer)
     conv1 = keras.layers.BatchNormalization()(conv1)
     conv1 = keras.layers.MaxPooling1D()(conv1)
     conv1 = keras.layers.ReLU()(conv1)
     conv1 = keras.layers.Dropout(0.6)(conv1)
 
-    conv2 = keras.layers.Conv1D(filters=64, kernel_size=3, padding="same")(conv1)
+    conv2 = keras.layers.Conv1D(filters=64, kernel_size=5, padding="same")(conv1)
     conv2 = keras.layers.BatchNormalization()(conv2)
     conv2 = keras.layers.MaxPooling1D()(conv2)
     conv2 = keras.layers.ReLU()(conv2)
     conv2 = keras.layers.Dropout(0.4)(conv2)
 
-    conv3 = keras.layers.Conv1D(filters=64, kernel_size=3, padding="same")(conv2)
+    conv3 = keras.layers.Conv1D(filters=64, kernel_size=5, padding="same")(conv2)
     conv3 = keras.layers.BatchNormalization()(conv3)
     conv3 = keras.layers.MaxPooling1D()(conv3)
     conv3 = keras.layers.ReLU()(conv3)
@@ -80,7 +80,7 @@ def make_trans_model(input_shape = (trans_samples,channels)):
     conv5 = keras.layers.MaxPooling1D()(conv5)
     conv5 = keras.layers.ReLU()(conv5)
 
-    conv8 = keras.layers.Conv1D(filters=num_decoder_tokens, kernel_size=9, activation="softmax", padding="same")(conv5)
+    conv8 = keras.layers.Conv1D(filters=num_decoder_tokens, kernel_size=13, activation="softmax", padding="same")(conv5)
     return keras.models.Model(inputs=input_layer, outputs=conv8)
 
     #encoder_lstm = keras.layers.LSTM(latent_dim, return_sequences=True, dropout=0.1)(conv5)

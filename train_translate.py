@@ -18,6 +18,7 @@ callbacks = [
     ),
     keras.callbacks.EarlyStopping(monitor="val_loss", patience=50, verbose=1),
 ]
+#opt = keras.optimizers.SGD(lr=0.01)
 model.compile(
     optimizer="adam",
     loss="categorical_crossentropy",
