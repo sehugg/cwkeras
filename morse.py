@@ -20,7 +20,7 @@ def generate_morse_samples(bits, symlen, variance, drift):
         if sym == 0:
             zerocnt += 1
             if zerocnt == 4: # is space? (7 bits)
-                p.append(i)
+                p.append(i-symlen[0*4]) # SWAG at start of space...
         else:
             if zerocnt >= 3: # inter-char? (3 bits)
                 p.append(i)

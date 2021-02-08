@@ -80,7 +80,7 @@ def make_trans_model(input_shape = (trans_samples,channels)):
     conv5 = keras.layers.MaxPooling1D()(conv5)
     conv5 = keras.layers.ReLU()(conv5)
 
-    conv8 = keras.layers.Conv1D(filters=num_decoder_tokens, kernel_size=7, activation="softmax", padding="same")(conv5)
+    conv8 = keras.layers.Conv1D(filters=num_decoder_tokens, kernel_size=9, activation="softmax", padding="same")(conv5)
     return keras.models.Model(inputs=input_layer, outputs=conv8)
 
     #encoder_lstm = keras.layers.LSTM(latent_dim, return_sequences=True, dropout=0.1)(conv5)
@@ -155,7 +155,8 @@ class TranslationGenerator(keras.utils.Sequence):
             str = ['.'] * max_translation_length
             empty = set(range(0,max_translation_length))
             for i, char in enumerate(msg):
-                ofs = int((posns[i] / trans_samples) * (max_translation_length-2))
+                # put bin smack dab in middle of the feature
+                ofs = round(((posns[i] + posns[i+1]) / trans_samples / 2) * (max_translation_length-2))
                 while ofs < max_translation_length and not ofs in empty:
                     ofs += 1
                 if ofs < max_translation_length:
@@ -168,7 +169,7 @@ class TranslationGenerator(keras.utils.Sequence):
                 y[ofs, 0] = 1.0
             x_train.append(x)
             y_train.append(y)
-            #   print(''.join(str))
+            #print(''.join(str))
         return np.array(x_train), np.array(y_train)
 
     def on_epoch_end(self):
