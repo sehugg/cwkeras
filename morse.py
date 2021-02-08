@@ -10,8 +10,13 @@ MAX_SNR = 10
 def generate_morse_samples(bits, symlen, variance, drift):
     i = random.random()
     s = []
+    p = []
     sym2 = 0
-    for b in bits:
+    p.append(i)
+    for k in range(0,len(bits)):
+        b = bits[k]
+        if b=='0' and bits[k:k+7] == '0000000':
+            p.append(i)
         sym = int(b)
         i2 = i + symlen[sym]
         l = int(i2 - int(i) + random.gauss(0, variance))
@@ -27,7 +32,8 @@ def generate_morse_samples(bits, symlen, variance, drift):
         i = i2
         sym2 = sym
     s.append(i-int(i))
-    return np.array(s)
+    p.append(i)
+    return np.array(s), np.array(p)
 
 def generate_signal(msg):
     sl = DEFAULT_SIGNAL_LENGTH
@@ -42,27 +48,29 @@ def generate_signal(msg):
         bits = mtalk.encode(msg, encoding_type='binary')
     variance = random.gauss(0,0.2)
     drift = random.gauss(0,0.1)
-    samp = generate_morse_samples(bits, symlen, variance, drift)
+    samp, posns = generate_morse_samples(bits, symlen, variance, drift)
     #blur = random.gauss(0,0.5)
     #samp = np.convolve(samp, [blur,1,blur])
-    return samp
+    return samp, posns
 
 def generate_signoise(msg, MAXSAMP):
-    sig = generate_signal(msg)
+    sig, posns = generate_signal(msg)
     siglen = len(sig)
     if siglen < MAXSAMP:
         # randomly center signal in window
         lpad = random.randrange(0, MAXSAMP-siglen)
         sig = np.pad(sig, (lpad, MAXSAMP-lpad-siglen), 'constant')
+        posns += lpad
     else:
         # signal bigger than window, at least 50% must appear
         sig = np.pad(sig, (MAXSAMP//2, MAXSAMP//2), 'constant')
         ofs = random.randrange(0, siglen)
         sig = sig[ofs:ofs+MAXSAMP]
+        posns += MAXSAMP//2 - ofs
     assert(sig.shape == (MAXSAMP,))
     noise = np.random.normal(0, 1, (MAXSAMP,))
     snr = MIN_SNR + random.random() * (MAX_SNR-MIN_SNR)
-    return sig * snr + noise
+    return sig * snr + noise, posns
 
 def generate_detection_training_sample(MAXSAMP, noempty=False):
     msg = ''
@@ -76,20 +84,29 @@ def generate_detection_training_sample(MAXSAMP, noempty=False):
     else:
         # no msg, just noise
         msg = ''
-    y = generate_signoise(msg, MAXSAMP)
+    y, posns = generate_signoise(msg, MAXSAMP)
     #normalized = (y-min(y))/(max(y)-min(y))
     normalized = (y - y.mean(axis=0)) / y.std(axis=0)
     return (msg, normalized)
+
+def generate_translation_training_sample(MAXSAMP):
+    msg = rstr.xeger(r'[A-Z]{1,2}\d{1,2}[A-Z]{1,4}')
+    y, posns = generate_signoise(msg, MAXSAMP)
+    toks = msg.split(' ')
+    # TODO: only return words in window
+    normalized = (y - y.mean(axis=0)) / y.std(axis=0)
+    return (msg, normalized, posns)
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     #y = generate_signoise('CQ', 300)
     fig, axs = plt.subplots(4, 4)
     for i in range(0,16):
-        msg,y = generate_detection_training_sample(500)
-        print(msg)
+        #msg,y = generate_detection_training_sample(500)
+        msg,y,posns = generate_translation_training_sample(1500)
+        print(msg, posns)
         ax = axs[i%4,i//4]
-        ax.plot(y)
+        ax.plot(y, linewidth=0.5)
         if len(msg) < 30:
             ax.set_title(msg)
         else:
