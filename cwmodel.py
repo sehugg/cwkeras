@@ -12,6 +12,7 @@ latent_dim = 100
 TOKENS = "$^0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ "
 num_decoder_tokens = len(TOKENS)
 target_token_index = dict([(char, i) for i, char in enumerate(TOKENS)])
+max_translation_length = 46
 
 # detection model
 def make_model(input_shape = (max_samples,channels)):
@@ -20,7 +21,6 @@ def make_model(input_shape = (max_samples,channels)):
     conv1 = keras.layers.Conv1D(filters=64, kernel_size=3, padding="same")(input_layer)
     conv1 = keras.layers.BatchNormalization()(conv1)
     conv1 = keras.layers.MaxPooling1D()(conv1)
-    conv1 = keras.layers.Dropout(0.2)(conv1)
     conv1 = keras.layers.ReLU()(conv1)
 
     conv2 = keras.layers.Conv1D(filters=64, kernel_size=3, padding="same")(conv1)
@@ -37,6 +37,7 @@ def make_model(input_shape = (max_samples,channels)):
     conv4 = keras.layers.Conv1D(filters=64, kernel_size=3, padding="same")(conv3)
     conv4 = keras.layers.BatchNormalization()(conv4)
     conv4 = keras.layers.MaxPooling1D()(conv4)
+    conv4 = keras.layers.Dropout(0.1)(conv4)
     conv4 = keras.layers.ReLU()(conv4)
 
     gap = keras.layers.GlobalAveragePooling1D()(conv4)
@@ -53,40 +54,41 @@ def make_trans_model(input_shape = (trans_samples,channels)):
     conv1 = keras.layers.Conv1D(filters=64, kernel_size=3, padding="same")(input_layer)
     conv1 = keras.layers.BatchNormalization()(conv1)
     conv1 = keras.layers.MaxPooling1D()(conv1)
-    conv1 = keras.layers.Dropout(0.2)(conv1)
     conv1 = keras.layers.ReLU()(conv1)
+    conv1 = keras.layers.Dropout(0.6)(conv1)
 
     conv2 = keras.layers.Conv1D(filters=64, kernel_size=3, padding="same")(conv1)
     conv2 = keras.layers.BatchNormalization()(conv2)
     conv2 = keras.layers.MaxPooling1D()(conv2)
-    conv2 = keras.layers.Dropout(0.2)(conv2)
     conv2 = keras.layers.ReLU()(conv2)
+    conv2 = keras.layers.Dropout(0.4)(conv2)
 
     conv3 = keras.layers.Conv1D(filters=64, kernel_size=3, padding="same")(conv2)
     conv3 = keras.layers.BatchNormalization()(conv3)
     conv3 = keras.layers.MaxPooling1D()(conv3)
     conv3 = keras.layers.ReLU()(conv3)
+    conv3 = keras.layers.Dropout(0.2)(conv3)
 
-    conv4 = keras.layers.Conv1D(filters=64, kernel_size=3, padding="same")(conv3)
+    conv4 = keras.layers.Conv1D(filters=128, kernel_size=3, padding="same")(conv3)
     conv4 = keras.layers.BatchNormalization()(conv4)
     conv4 = keras.layers.MaxPooling1D()(conv4)
     conv4 = keras.layers.ReLU()(conv4)
+    conv4 = keras.layers.Dropout(0.1)(conv4)
 
-    conv5 = keras.layers.Conv1D(filters=64, kernel_size=3, padding="same")(conv4)
+    conv5 = keras.layers.Conv1D(filters=128, kernel_size=3, padding="same")(conv4)
     conv5 = keras.layers.BatchNormalization()(conv5)
     conv5 = keras.layers.MaxPooling1D()(conv5)
-    conv5 = keras.layers.Dropout(0.1)(conv5)
     conv5 = keras.layers.ReLU()(conv5)
 
-    conv6 = keras.layers.Conv1D(filters=64, kernel_size=3, padding="same")(conv5)
-    conv6 = keras.layers.BatchNormalization()(conv6)
-    conv6 = keras.layers.MaxPooling1D()(conv6)
-    conv6 = keras.layers.ReLU()(conv6)
+    conv6 = keras.layers.Conv1D(filters=num_decoder_tokens, kernel_size=5, activation="softmax", padding="same")(conv5)
+    conv7 = keras.layers.Conv1D(filters=num_decoder_tokens, kernel_size=3, activation="softmax", padding="same")(conv6)
+    return keras.models.Model(inputs=input_layer, outputs=conv7)
 
-    decoder_lstm = keras.layers.LSTM(latent_dim, dropout=0.1, return_sequences=True)(conv6)
-    encoder_lstm = keras.layers.LSTM(num_decoder_tokens, return_sequences=True)(decoder_lstm)
-    return keras.models.Model(inputs=input_layer, outputs=encoder_lstm)
+    #encoder_lstm = keras.layers.LSTM(latent_dim, return_sequences=True, dropout=0.1)(conv5)
+    #decoder_lstm = keras.layers.LSTM(num_decoder_tokens, dropout=0.1, return_sequences=True)(encoder_lstm)
+    #return keras.models.Model(inputs=input_layer, outputs=decoder_lstm)
 
+    #encoder_inputs = conv5
     #encoder = keras.layers.LSTM(latent_dim, return_state=True, dropout=0.2)
     #encoder_outputs, state_h, state_c = encoder(encoder_inputs)
     # We discard `encoder_outputs` and only keep the states.
@@ -119,7 +121,7 @@ class DataGenerator(keras.utils.Sequence):
         x_train = []
         y_train = []
         for i in range(0,self.batch_size):
-            msg, x = morse.generate_detection_training_sample(max_samples)
+            msg, x, posns = morse.generate_detection_training_sample(max_samples)
             x = np.reshape(x, (-1,1))
             y = len(msg) > 0 and msg[0] != '~'
             x_train.append(x)
@@ -132,7 +134,7 @@ class DataGenerator(keras.utils.Sequence):
 
 class TranslationGenerator(keras.utils.Sequence):
     'Generates detection data for Keras'
-    def __init__(self, batch_size=64):
+    def __init__(self, batch_size=128):
         'Initialization'
         self.dim = (batch_size,trans_samples,channels)
         self.batch_size = batch_size
@@ -149,12 +151,24 @@ class TranslationGenerator(keras.utils.Sequence):
         for i in range(0, self.batch_size):
             msg, x, posns = morse.generate_translation_training_sample(trans_samples)
             x = np.reshape(x, (-1,1))
-            y = np.zeros((23, num_decoder_tokens))
-            msg += '$'
-            for t, char in enumerate(msg):
-                y[t, target_token_index[msg[t]]] = 1.0
+            y = np.zeros((max_translation_length, num_decoder_tokens))
+            str = ['.'] * max_translation_length
+            empty = set(range(0,max_translation_length))
+            for i, char in enumerate(msg):
+                ofs = int((posns[i] / trans_samples) * max_translation_length)
+                while ofs < max_translation_length and not ofs in empty:
+                    ofs += 1
+                if ofs < max_translation_length:
+                    empty.remove(ofs)
+                    y[ofs, target_token_index[msg[i]]] = 1.0
+                    str[ofs] = char
+                else:
+                    print(ofs, msg, ''.join(str))
+            for ofs in empty:
+                y[ofs, 0] = 1.0
             x_train.append(x)
             y_train.append(y)
+            #print(''.join(str))
         return np.array(x_train), np.array(y_train)
 
     def on_epoch_end(self):
