@@ -12,7 +12,7 @@ latent_dim = 100
 TOKENS = "$^0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ "
 num_decoder_tokens = len(TOKENS)
 target_token_index = dict([(char, i) for i, char in enumerate(TOKENS)])
-max_translation_length = 23
+max_translation_length = 46
 
 # detection model
 def make_model(input_shape = (max_samples,channels)):
@@ -69,23 +69,18 @@ def make_trans_model(input_shape = (trans_samples,channels)):
     conv3 = keras.layers.ReLU()(conv3)
     conv3 = keras.layers.Dropout(0.2)(conv3)
 
-    conv4 = keras.layers.Conv1D(filters=128, kernel_size=3, padding="same")(conv3)
+    conv4 = keras.layers.Conv1D(filters=128, kernel_size=5, padding="same")(conv3)
     conv4 = keras.layers.BatchNormalization()(conv4)
     conv4 = keras.layers.MaxPooling1D()(conv4)
     conv4 = keras.layers.ReLU()(conv4)
     conv4 = keras.layers.Dropout(0.1)(conv4)
 
-    conv5 = keras.layers.Conv1D(filters=128, kernel_size=3, padding="same")(conv4)
+    conv5 = keras.layers.Conv1D(filters=128, kernel_size=5, padding="same")(conv4)
     conv5 = keras.layers.BatchNormalization()(conv5)
     conv5 = keras.layers.MaxPooling1D()(conv5)
     conv5 = keras.layers.ReLU()(conv5)
 
-    conv6 = keras.layers.Conv1D(filters=128, kernel_size=3, padding="same")(conv5)
-    conv6 = keras.layers.BatchNormalization()(conv6)
-    conv6 = keras.layers.MaxPooling1D()(conv6)
-    conv6 = keras.layers.ReLU()(conv6)
-
-    conv8 = keras.layers.Conv1D(filters=num_decoder_tokens, kernel_size=7, activation="softmax", padding="same")(conv6)
+    conv8 = keras.layers.Conv1D(filters=num_decoder_tokens, kernel_size=7, activation="softmax", padding="same")(conv5)
     return keras.models.Model(inputs=input_layer, outputs=conv8)
 
     #encoder_lstm = keras.layers.LSTM(latent_dim, return_sequences=True, dropout=0.1)(conv5)
@@ -160,7 +155,7 @@ class TranslationGenerator(keras.utils.Sequence):
             str = ['.'] * max_translation_length
             empty = set(range(0,max_translation_length))
             for i, char in enumerate(msg):
-                ofs = int((posns[i] / trans_samples) * (max_translation_length-3))
+                ofs = int((posns[i] / trans_samples) * (max_translation_length-2))
                 while ofs < max_translation_length and not ofs in empty:
                     ofs += 1
                 if ofs < max_translation_length:
@@ -173,7 +168,7 @@ class TranslationGenerator(keras.utils.Sequence):
                 y[ofs, 0] = 1.0
             x_train.append(x)
             y_train.append(y)
-            #print(''.join(str))
+            #   print(''.join(str))
         return np.array(x_train), np.array(y_train)
 
     def on_epoch_end(self):
