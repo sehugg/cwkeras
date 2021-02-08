@@ -12,7 +12,7 @@ latent_dim = 100
 TOKENS = "$^0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ "
 num_decoder_tokens = len(TOKENS)
 target_token_index = dict([(char, i) for i, char in enumerate(TOKENS)])
-max_translation_length = 46
+max_translation_length = 23
 
 # detection model
 def make_model(input_shape = (max_samples,channels)):
@@ -80,9 +80,13 @@ def make_trans_model(input_shape = (trans_samples,channels)):
     conv5 = keras.layers.MaxPooling1D()(conv5)
     conv5 = keras.layers.ReLU()(conv5)
 
-    conv6 = keras.layers.Conv1D(filters=num_decoder_tokens, kernel_size=5, activation="softmax", padding="same")(conv5)
-    conv7 = keras.layers.Conv1D(filters=num_decoder_tokens, kernel_size=3, activation="softmax", padding="same")(conv6)
-    return keras.models.Model(inputs=input_layer, outputs=conv7)
+    conv6 = keras.layers.Conv1D(filters=128, kernel_size=3, padding="same")(conv5)
+    conv6 = keras.layers.BatchNormalization()(conv6)
+    conv6 = keras.layers.MaxPooling1D()(conv6)
+    conv6 = keras.layers.ReLU()(conv6)
+
+    conv8 = keras.layers.Conv1D(filters=num_decoder_tokens, kernel_size=7, activation="softmax", padding="same")(conv6)
+    return keras.models.Model(inputs=input_layer, outputs=conv8)
 
     #encoder_lstm = keras.layers.LSTM(latent_dim, return_sequences=True, dropout=0.1)(conv5)
     #decoder_lstm = keras.layers.LSTM(num_decoder_tokens, dropout=0.1, return_sequences=True)(encoder_lstm)
@@ -150,12 +154,13 @@ class TranslationGenerator(keras.utils.Sequence):
         y_train = []
         for i in range(0, self.batch_size):
             msg, x, posns = morse.generate_translation_training_sample(trans_samples)
+            assert(len(posns) == len(msg)+1)
             x = np.reshape(x, (-1,1))
             y = np.zeros((max_translation_length, num_decoder_tokens))
             str = ['.'] * max_translation_length
             empty = set(range(0,max_translation_length))
             for i, char in enumerate(msg):
-                ofs = int((posns[i] / trans_samples) * max_translation_length)
+                ofs = int((posns[i] / trans_samples) * (max_translation_length-3))
                 while ofs < max_translation_length and not ofs in empty:
                     ofs += 1
                 if ofs < max_translation_length:
