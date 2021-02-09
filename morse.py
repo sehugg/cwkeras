@@ -2,9 +2,8 @@ import rstr, math, random, re
 import morse_talk as mtalk
 import numpy as np
 
-DEFAULT_SIGNAL_LENGTH = 6   # 50 msec/dit at 20 wpm
 MIN_SIGNAL_LENGTH = 3       # 30 msec/dit at 40 wpm
-MAX_SIGNAL_LENGTH = 9
+MAX_SIGNAL_LENGTH = 10      # 100 msec/dit at 10 wpm
 MIN_SNR = 2
 MAX_SNR = 10
 
@@ -18,6 +17,7 @@ def generate_morse_samples(bits, symlen, variance, drift):
     for k in range(0,len(bits)):
         b = bits[k]
         sym = int(b)
+        symlen[sym] = min(MAX_SIGNAL_LENGTH, max(MIN_SIGNAL_LENGTH, symlen[sym] + random.gauss(0, drift)))
         if sym == 0:
             zerocnt += 1
             if zerocnt == 4: # is space? (7 bits)
@@ -36,7 +36,6 @@ def generate_morse_samples(bits, symlen, variance, drift):
             s.extend([sym] * (l-1))
         else:
             s.extend([sym] * l)
-        symlen[sym] = min(MAX_SIGNAL_LENGTH, max(MIN_SIGNAL_LENGTH, symlen[sym] + random.gauss(0, drift)))
         i = i2
         sym2 = sym
     s.append(i-int(i))
@@ -44,7 +43,7 @@ def generate_morse_samples(bits, symlen, variance, drift):
     return np.array(s), np.array(p)
 
 def generate_signal(msg):
-    sl = DEFAULT_SIGNAL_LENGTH
+    sl = MIN_SIGNAL_LENGTH + random.random() * (MAX_SIGNAL_LENGTH - MIN_SIGNAL_LENGTH)
     sv = random.gauss(0,1)
     symlen = [sl+random.gauss(0,sv), sl+random.gauss(0,sv)]
     variance = 0
@@ -96,8 +95,8 @@ def generate_detection_training_sample(MAXSAMP, noempty=False):
         # no msg, just noise
         msg = ''
     y, posns = generate_signoise(msg, MAXSAMP)
-    #normalized = (y-min(y))/(max(y)-min(y))
-    normalized = (y - y.mean(axis=0)) / y.std(axis=0)
+    normalized = (y-min(y))/(max(y)-min(y))
+    #normalized = (y - y.mean(axis=0)) / y.std(axis=0)
     return (msg, normalized, posns)
 
 def generate_translation_training_sample(MAXSAMP):
