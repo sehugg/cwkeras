@@ -87,7 +87,8 @@ def generate_detection_training_sample(MAXSAMP, noempty=False):
     r = random.random()
     if r > 0.5 or noempty:
         # cq? callsign grid?
-        msg = rstr.xeger(r'(CQ )?\d?[A-Z]{1,2}\d{1,4}[A-Z]{1,4}( [A-R][A-R][0-9][0-9])?')
+        #msg = rstr.xeger(r'(CQ )?\d?[A-Z]{1,2}\d{1,4}[A-Z]{1,4}( [A-R][A-R][0-9][0-9])?')
+        msg = rstr.xeger(r'[A-Z0-9]{2,10} [A-Z0-9]{2,10}')
     elif r > 0.25:
         # fake msg
         msg = '~' + rstr.xeger(r'[0-1]{30,200}')
