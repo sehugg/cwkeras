@@ -22,23 +22,25 @@ def make_model(input_shape = (max_samples,channels)):
     conv1 = keras.layers.BatchNormalization()(conv1)
     conv1 = keras.layers.MaxPooling1D()(conv1)
     conv1 = keras.layers.ReLU()(conv1)
+    conv1 = keras.layers.Dropout(0.6)(conv1)
 
     conv2 = keras.layers.Conv1D(filters=64, kernel_size=3, padding="same")(conv1)
     conv2 = keras.layers.BatchNormalization()(conv2)
     conv2 = keras.layers.MaxPooling1D()(conv2)
-    conv2 = keras.layers.Dropout(0.2)(conv2)
     conv2 = keras.layers.ReLU()(conv2)
+    conv2 = keras.layers.Dropout(0.4)(conv2)
 
     conv3 = keras.layers.Conv1D(filters=64, kernel_size=3, padding="same")(conv2)
     conv3 = keras.layers.BatchNormalization()(conv3)
     conv3 = keras.layers.MaxPooling1D()(conv3)
     conv3 = keras.layers.ReLU()(conv3)
+    conv3 = keras.layers.Dropout(0.2)(conv3)
 
     conv4 = keras.layers.Conv1D(filters=64, kernel_size=3, padding="same")(conv3)
     conv4 = keras.layers.BatchNormalization()(conv4)
     conv4 = keras.layers.MaxPooling1D()(conv4)
-    conv4 = keras.layers.Dropout(0.1)(conv4)
     conv4 = keras.layers.ReLU()(conv4)
+    conv4 = keras.layers.Dropout(0.1)(conv4)
 
     gap = keras.layers.GlobalAveragePooling1D()(conv4)
 

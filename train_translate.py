@@ -11,12 +11,12 @@ model.summary()
 
 callbacks = [
     keras.callbacks.ModelCheckpoint(
-        checkpoint_fn, save_best_only=True, monitor="val_loss"
+        checkpoint_fn, save_best_only=True, monitor="loss"
     ),
     keras.callbacks.ReduceLROnPlateau(
-        monitor="val_loss", factor=0.5, patience=20, min_lr=0.0001
+        monitor="loss", factor=0.5, patience=20, min_lr=0.0001
     ),
-    keras.callbacks.EarlyStopping(monitor="val_loss", patience=50, verbose=1),
+    keras.callbacks.EarlyStopping(monitor="loss", patience=50, verbose=1),
 ]
 #opt = keras.optimizers.SGD(lr=0.01)
 model.compile(
@@ -36,8 +36,8 @@ epochs = 500
 
 history = model.fit(
     x=training_generator,
-    validation_data=validation_generator,
-    validation_steps=100,
+    #validation_data=validation_generator,
+    #validation_steps=100,
     epochs=epochs,
     callbacks=callbacks,
     verbose=1,
