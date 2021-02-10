@@ -2,7 +2,7 @@ import rstr, math, random, re
 import morse_talk as mtalk
 import numpy as np
 
-MIN_SIGNAL_LENGTH = 2
+MIN_SIGNAL_LENGTH = 1
 MAX_SIGNAL_LENGTH = 8
 MIN_SNR = 2
 MAX_SNR = 20
@@ -44,7 +44,7 @@ def generate_morse_samples(bits, symlen, variance, drift):
 
 def generate_signal(msg):
     sl = MIN_SIGNAL_LENGTH + random.random() * (MAX_SIGNAL_LENGTH - MIN_SIGNAL_LENGTH)
-    sv = random.gauss(0,1)
+    sv = random.random()
     symlen = [sl+random.gauss(0,sv), sl+random.gauss(0,sv)]
     variance = random.gauss(0, 0.2*sv)
     drift = random.gauss(0, 0.1*sv)
@@ -88,8 +88,10 @@ def generate_detection_training_sample(MAXSAMP, noempty=False):
     r = random.random()
     if r > 0.5 or noempty:
         # cq? callsign grid?
-        #msg = rstr.xeger(r'(CQ )?\d?[A-Z]{1,2}\d{1,4}[A-Z]{1,4}( [A-R][A-R][0-9][0-9])?')
-        msg = rstr.xeger(r'[A-Z0-9]{2,10} [A-Z0-9]{2,10}')
+        if r > 0.9:
+            msg = rstr.xeger(r'(CQ )?\d?[A-Z]{1,2}\d{1,4}[A-Z]{1,4}( [A-R][A-R][0-9][0-9])?')
+        else:
+            msg = rstr.xeger(r'[A-Z0-9]{3,12} [A-Z0-9]{3,12}')
     elif r > 0.25:
         # fake msg
         msg = '~' + rstr.xeger(r'[0-1]{30,200}')

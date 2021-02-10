@@ -33,10 +33,13 @@ for fn in fns:
     #print([frequencies[i[0]] for i in np.argwhere(p > 0.5)])
     #print("---")
 
-    plt.pcolormesh(times, frequencies, spectrogram)
+    plt.subplot(211, label=fn)
+    plt.pcolormesh(times, frequencies, spectrogram, shading='auto')
     plt.imshow(spectrogram)
     plt.ylabel('Frequency [Hz]')
     plt.xlabel('Time [sec]')
+    plt.subplot(212, label=fn)
+    plt.plot(xy[19])
 
 plt.show()
 

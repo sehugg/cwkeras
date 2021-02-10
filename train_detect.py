@@ -11,12 +11,12 @@ model.summary()
 
 callbacks = [
     keras.callbacks.ModelCheckpoint(
-        checkpoint_fn, save_best_only=True, monitor="loss"
+        checkpoint_fn, save_best_only=True, monitor="binary_accuracy"
     ),
     keras.callbacks.ReduceLROnPlateau(
-        monitor="loss", factor=0.5, patience=20, min_lr=0.0001
+        monitor="binary_accuracy", factor=0.5, patience=20, min_lr=0.0001
     ),
-    keras.callbacks.EarlyStopping(monitor="loss", patience=50, verbose=1),
+    keras.callbacks.EarlyStopping(monitor="binary_accuracy", patience=50, verbose=1),
 ]
 model.compile(
     optimizer="adam",
