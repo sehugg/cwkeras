@@ -4,19 +4,22 @@ cwkeras: Decode Morse Code (CW) with Keras
 
 Installation
 ---
-TODO
+
+TODO: more docs
+
 ~~~sh
 python3.8 -m venv .
 . bin/activate
 pip install -r requirements.txt
 python train_detect.py
+python train_translate.py
 ~~~
 
 Training Data
 ---
 
 We generate training samples of three types:
-1. Random callsign in CW + noise (3 chars min)
+1. Random CW characters + noise
 2. Random 0s and 1s + noise
 3. Just noise
 
@@ -29,12 +32,14 @@ If the morse signal is bigger than the window size, we crop it so that at least 
 The pulse stream dit length and non-dit length varies in speed, and also may vary during the sample.
 
 
+
+
 Model
 ---
 
 For recognition (is there or is there not a Morse code signal?) we use multiple Conv1D layers.
 
-For translation to text we'll use a LSTM or something.
+For translation, we use Conv1D layers, the last layer having exactly as many filters as target characters (A-Z, 0-9, space), plus one for "no character", 39 values in all. So about 1000 bins get downsampled to about 62 x 39 bins.
 
 ---
 
