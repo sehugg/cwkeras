@@ -13,7 +13,7 @@ fns = sys.argv[1:]
 for fn in fns:
     sample_rate, samples = wavfile.read(fn)
     #print(fn, sample_rate, len(samples))
-    frequencies, times, spectrogram = signal.spectrogram(samples, fs=sample_rate, nperseg=256, noverlap=128)
+    frequencies, times, spectrogram = signal.spectrogram(samples, fs=sample_rate, nperseg=256, noverlap=192)
 
     checkpoint_fn = "best_model.h5"
     model = cwmodel.make_model()

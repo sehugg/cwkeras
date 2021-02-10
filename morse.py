@@ -2,10 +2,10 @@ import rstr, math, random, re
 import morse_talk as mtalk
 import numpy as np
 
-MIN_SIGNAL_LENGTH = 3       # 30 msec/dit at 40 wpm
-MAX_SIGNAL_LENGTH = 10      # 100 msec/dit at 10 wpm
+MIN_SIGNAL_LENGTH = 2
+MAX_SIGNAL_LENGTH = 8
 MIN_SNR = 2
-MAX_SNR = 10
+MAX_SNR = 20
 
 def generate_morse_samples(bits, symlen, variance, drift):
     i = random.random()
@@ -46,26 +46,25 @@ def generate_signal(msg):
     sl = MIN_SIGNAL_LENGTH + random.random() * (MAX_SIGNAL_LENGTH - MIN_SIGNAL_LENGTH)
     sv = random.gauss(0,1)
     symlen = [sl+random.gauss(0,sv), sl+random.gauss(0,sv)]
-    variance = 0
-    drift = 0
+    variance = random.gauss(0, 0.2*sv)
+    drift = random.gauss(0, 0.1*sv)
     # fake msgs start with "~"
     isfake = re.match(r'^[~][01]+$', msg)
     if isfake:
         bits = msg[1:]
     else:
         bits = mtalk.encode(msg, encoding_type='binary')
-    variance = random.gauss(0,0.2)
-    drift = random.gauss(0,0.1)
     samp, posns = generate_morse_samples(bits, symlen, variance, drift)
     if not isfake and len(msg) > 0:
         assert(len(posns) == len(msg)+1)
-    #blur = random.gauss(0,0.5)
-    #samp = np.convolve(samp, [blur,1,blur])
+    # simulate 50% windowing
+    samp = np.convolve(samp, [1/4, 1/2, 1/4])
     return samp, posns
 
 def generate_signoise(msg, MAXSAMP):
     sig, posns = generate_signal(msg)
     siglen = len(sig)
+    bpc = siglen / len(posns)  # bins per char
     if siglen < MAXSAMP-1:
         # randomly center signal in window
         lpad = random.randrange(0, MAXSAMP-siglen-1)
@@ -79,6 +78,8 @@ def generate_signoise(msg, MAXSAMP):
         posns += MAXSAMP//2 - ofs
     assert(sig.shape == (MAXSAMP,))
     noise = np.random.normal(0, 1, (MAXSAMP,))
+    # TODO: snr proportional to bitrate
+    #snr = MIN_SNR + MAX_SNR / bpc
     snr = MIN_SNR + random.random() * (MAX_SNR-MIN_SNR)
     return sig * snr + noise, posns
 
@@ -110,17 +111,28 @@ def generate_translation_training_sample(MAXSAMP):
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    #y = generate_signoise('CQ', 300)
-    fig, axs = plt.subplots(4, 4)
-    for i in range(0,16):
-        msg,y,posns = generate_detection_training_sample(500)
-        #msg,y,posns = generate_translation_training_sample(1500)
-        print(msg, posns)
-        ax = axs[i%4,i//4]
-        ax.plot(y, linewidth=0.5)
-        if len(msg) < 30:
-            ax.set_title(msg)
-        else:
-            ax.set_title(str(len(msg))+' bits')
-    plt.tight_layout()
-    plt.show()
+    if 1:
+        nex = 25
+        im = []
+        for i in range(0,nex):
+            msg,y,posns = generate_detection_training_sample(500)
+            im.append(y)
+            im.append(np.zeros(len(y)))
+        im = np.array(im)
+        plt.imshow(im, aspect='auto')
+        plt.show()
+    if 0:
+        #y = generate_signoise('CQ', 300)
+        fig, axs = plt.subplots(4, 4)
+        for i in range(0,16):
+            msg,y,posns = generate_detection_training_sample(500)
+            #msg,y,posns = generate_translation_training_sample(1500)
+            print(msg, posns)
+            ax = axs[i%4,i//4]
+            ax.plot(y, linewidth=0.5)
+            if len(msg) < 30:
+                ax.set_title(msg)
+            else:
+                ax.set_title(str(len(msg))+' bits')
+        plt.tight_layout()
+        plt.show()
