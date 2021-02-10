@@ -117,7 +117,8 @@ if __name__ == "__main__":
         nex = 25
         im = []
         for i in range(0,nex):
-            msg,y,posns = generate_detection_training_sample(500)
+            #msg,y,posns = generate_detection_training_sample(500)
+            msg,y,posns = generate_translation_training_sample(1000)
             im.append(y)
             im.append(np.zeros(len(y)))
         im = np.array(im)
@@ -128,7 +129,6 @@ if __name__ == "__main__":
         fig, axs = plt.subplots(4, 4)
         for i in range(0,16):
             msg,y,posns = generate_detection_training_sample(500)
-            #msg,y,posns = generate_translation_training_sample(1500)
             print(msg, posns)
             ax = axs[i%4,i//4]
             ax.plot(y, linewidth=0.5)
