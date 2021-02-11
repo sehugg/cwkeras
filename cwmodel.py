@@ -18,7 +18,7 @@ use_lstm = False
 # detection model
 def make_model(input_shape = (max_samples,channels)):
     input_layer = keras.layers.Input(input_shape)
-    nf = 32
+    nf = 64
     ks = 7
 
     conv1 = keras.layers.Conv1D(filters=nf, kernel_size=ks, padding="same")(input_layer)
@@ -41,8 +41,13 @@ def make_model(input_shape = (max_samples,channels)):
 
     conv4 = keras.layers.Conv1D(filters=nf, kernel_size=ks, padding="same")(conv3)
     conv4 = keras.layers.BatchNormalization()(conv4)
+    conv4 = keras.layers.MaxPooling1D()(conv4)
+    conv4 = keras.layers.ReLU()(conv4)
+    conv4 = keras.layers.Dropout(0.2)(conv4)
 
-    gap = keras.layers.GlobalAveragePooling1D()(conv4)
+    conv5 = keras.layers.Conv1D(filters=nf, kernel_size=ks, padding="same")(conv4)
+
+    gap = keras.layers.GlobalAveragePooling1D()(conv5)
 
     output_layer = keras.layers.Dense(1, activation="sigmoid")(gap)
 
