@@ -23,7 +23,7 @@ for fn in fns:
     if spectrogram.shape[1] < cwmodel.max_samples:
         xy = np.pad(spectrogram, ((0,0), (0,cwmodel.max_samples-spectrogram.shape[1])))
     else:
-        xy = spectrogram[:, 0:500]
+        xy = spectrogram[:, 0:cwmodel.max_samples]
     xy = (xy - np.min(xy)) / (np.max(xy) - np.min(xy))
     xy = np.reshape(xy, (xy.shape[0], xy.shape[1], 1))
     #print(xy.shape)
