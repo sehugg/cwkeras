@@ -107,8 +107,9 @@ def generate_translation_training_sample(MAXSAMP):
     msg = rstr.xeger(r'[A-Z]{1,2}\d{1,2}[A-Z]{1,4}')
     y, posns = generate_signoise(msg, MAXSAMP)
     toks = msg.split(' ')
-    # TODO: only return words in window
-    normalized = (y - y.mean(axis=0)) / y.std(axis=0)
+    # TODO: only return words in window?
+    normalized = (y-min(y))/(max(y)-min(y))
+    #normalized = (y - y.mean(axis=0)) / y.std(axis=0)
     return (msg, normalized, posns)
 
 if __name__ == "__main__":
@@ -118,7 +119,7 @@ if __name__ == "__main__":
         im = []
         for i in range(0,nex):
             #msg,y,posns = generate_detection_training_sample(500)
-            msg,y,posns = generate_translation_training_sample(1000)
+            msg,y,posns = generate_translation_training_sample(500)
             im.append(y)
             im.append(np.zeros(len(y)))
         im = np.array(im)

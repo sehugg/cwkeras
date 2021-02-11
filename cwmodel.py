@@ -6,7 +6,7 @@ channels = 1
 samples_per_sec = 100
 max_seconds = 5
 max_samples = max_seconds * samples_per_sec
-trans_seconds = 10
+trans_seconds = 5
 trans_samples = trans_seconds * samples_per_sec
 latent_dim = 100
 TOKENS = "$^0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ "
@@ -57,8 +57,8 @@ def make_model(input_shape = (max_samples,channels)):
 # https://keras.io/examples/nlp/lstm_seq2seq/
 def make_trans_model(input_shape = (trans_samples,channels)):
     input_layer = keras.layers.Input(input_shape)
-    nf = 64
-    ks = 7
+    nf = 128
+    ks = 5
 
     conv1 = keras.layers.Conv1D(filters=nf, kernel_size=ks, padding="same")(input_layer)
     conv1 = keras.layers.BatchNormalization()(conv1)
@@ -76,21 +76,15 @@ def make_trans_model(input_shape = (trans_samples,channels)):
     conv3 = keras.layers.BatchNormalization()(conv3)
     conv3 = keras.layers.MaxPooling1D()(conv3)
     conv3 = keras.layers.ReLU()(conv3)
-    conv3 = keras.layers.Dropout(0.2)(conv3)
-
-    conv4 = keras.layers.Conv1D(filters=nf, kernel_size=ks, padding="same")(conv3)
-    conv4 = keras.layers.BatchNormalization()(conv4)
-    conv4 = keras.layers.MaxPooling1D()(conv4)
-    conv4 = keras.layers.ReLU()(conv4)
-    conv4 = keras.layers.Dropout(0.1)(conv4)
 
     if use_lstm:
-        lstm1 = keras.layers.LSTM(nf, go_backwards=True, return_sequences=True)(conv4)
+        lstm1 = keras.layers.LSTM(nf, go_backwards=True, return_sequences=True)(conv3)
         lstm2 = keras.layers.LSTM(num_decoder_tokens, return_sequences=True)(lstm1)
         return keras.models.Model(inputs=input_layer, outputs=lstm2)
     else:
-        conv8 = keras.layers.Conv1D(filters=num_decoder_tokens, kernel_size=13, activation="softmax", padding="same")(conv4)
-        return keras.models.Model(inputs=input_layer, outputs=conv8)
+        conv8 = keras.layers.Conv1D(filters=nf, kernel_size=ks, activation="relu", padding="same")(conv3)
+        dense = keras.layers.TimeDistributed(keras.layers.Dense(num_decoder_tokens, activation="softmax"))(conv8)
+        return keras.models.Model(inputs=input_layer, outputs=dense)
 
     #encoder_lstm = keras.layers.LSTM(latent_dim, return_sequences=True, dropout=0.1)(conv5)
     #decoder_lstm = keras.layers.LSTM(num_decoder_tokens, dropout=0.1, return_sequences=True)(encoder_lstm)
@@ -173,14 +167,13 @@ class TranslationGenerator(keras.utils.Sequence):
                     ofs = int(pos)
                 while ofs < max_translation_length and not ofs in empty:
                     ofs += 1
-                    pos += 1
-                if ofs >= 0 and ofs < max_translation_length:
+                if ofs >= 0 and ofs < max_translation_length and posns[i] > 0 and posns[i+1] < trans_samples:
                     empty.remove(ofs)
                     tti = target_token_index[msg[i]]
                     y[ofs+0, tti] = 1
                     str[ofs] = char
                 else:
-                    print(ofs, msg, ''.join(str))
+                    pass #print(ofs, msg, ''.join(str))
             for ofs in empty:
                 y[ofs, 0] = 1.0
             x_train.append(x)
