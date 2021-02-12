@@ -50,7 +50,7 @@ Translation Model
 
 For translation, we use Conv1D layers, the last layer having exactly as many filters as target characters (A-Z, 0-9, space), plus one for "no character", 39 values in all.
 
-The translation model also uses multiple Conv1D layers, but 128 x 5 filters.
+The translation model also uses multiple Conv1D layers, but 96 x 7 filters.
 500 samples get downsampled to 62 bins, and symbols are decoded into the closest bin.
 The final layer is a TimeDistributed Dense layer to classify each bin -> symbol, or 0 = no symbol.
 

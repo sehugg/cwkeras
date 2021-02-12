@@ -80,8 +80,10 @@ def generate_signoise(msg, MAXSAMP):
     noise = np.random.normal(0, 1, (MAXSAMP,))
     # TODO: snr proportional to bitrate
     #snr = MIN_SNR + MAX_SNR / bpc
+    snr2 = MIN_SNR + random.random() * (MAX_SNR-MIN_SNR)
+    multnoise = np.random.normal(1, 1.0/snr2, (MAXSAMP,))
     snr = MIN_SNR + random.random() * (MAX_SNR-MIN_SNR)
-    return sig * snr + noise, posns
+    return sig * multnoise * snr + noise, posns
 
 def generate_detection_training_sample(MAXSAMP, noempty=False):
     r = random.random()
