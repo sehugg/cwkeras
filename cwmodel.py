@@ -56,7 +56,7 @@ def make_model(input_shape = (max_samples,channels)):
 # https://keras.io/examples/nlp/lstm_seq2seq/
 def make_trans_model(input_shape = (trans_samples,channels)):
     input_layer = keras.layers.Input(input_shape)
-    nf = 128
+    nf = 64
     ks = 7
 
     conv1 = keras.layers.Conv1D(filters=nf, kernel_size=ks, padding="same")(input_layer)
@@ -161,19 +161,19 @@ class TranslationGenerator(keras.utils.Sequence):
             # iterate over all bins
             for i, char in enumerate(msg):
                 if use_lstm:
-                    # lstm, symbols line up against left side
-                    pos = i
-                    ofs = i
+                    # lstm, bin goes at end of symbol
+                    pos = posns[i+1] / trans_samples * max_translation_length
+                    ofs = int(round(pos))+1
                 else:
                     # put bin smack dab in middle of the feature
-                    pos = ((posns[i] + posns[i+1]) / trans_samples / 2) * (max_translation_length-2)
+                    pos = ((posns[i] + posns[i+1]) / trans_samples / 2) * max_translation_length
                     ofs = int(round(pos))
                 # is this symbol in the window?
                 if ofs > 0 and ofs < max_translation_length-1 and posns[i] > 0 and posns[i+1] < trans_samples:
                     tti = target_token_index[msg[i]]
-                    y[ofs-1, tti] = 1/3
+                    y[ofs-1, tti] = 1/4
                     y[ofs+0, tti] = 1/1
-                    y[ofs+1, tti] = 1/3
+                    y[ofs+1, tti] = 1/4
                     str[ofs] = char
             # set "no symbol" probability for bins
             for ofs in range(0,max_translation_length):
