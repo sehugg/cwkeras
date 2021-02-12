@@ -1,9 +1,7 @@
 
-cwkeras: Decode Morse Code (CW) with Keras
-===
+# cwkeras: Decode Morse Code (CW) with Keras
 
-Installation
----
+## Installation
 
 You need Python 3.5-3.8 to run Tensorflow (last I checked)
 
@@ -11,14 +9,40 @@ You need Python 3.5-3.8 to run Tensorflow (last I checked)
 python3.8 -m venv .
 . bin/activate
 pip install -r requirements.txt
+~~~
+
+## Training
+
+Train the detection model:
+~~~sh
 python train_detect.py
+~~~
+Train the translation model:
+~~~sh
 python train_translate.py
+~~~
+
+## Prediction
+
+Detect and translate Morse code from .wav files:
+~~~sh
 python run_detect.py [.wav files...]
 ~~~
 
+Or in real time from the default audio-in device:
+~~~sh
+python run_snd.py [.wav files...]
+~~~
 
-Training Data
----
+Whenever CW is detected, it'll output the bin number and predicted translation:
+~~~
+G22R49Z6GYQVM9ZOAM8N.wav 8000 70137
+19 ...G..2...2.....4...99..Z..6..G..YY..Q..V..M..99..Z..O..A.M...
+~~~
+When translating in real-time, audio is captured in a 5-second window, which shifts every 2.5 seconds.
+
+
+## Training Data
 
 We generate training samples of three types:
 1. Random CW symbols + noise (50%)
@@ -34,10 +58,7 @@ If the morse signal is bigger than the window size, we crop it so that at least 
 The pulse stream dit length and non-dit length varies in speed, and also may vary during the sample.
 
 
-
-
-Detection Model
----
+## Detection Model
 
 The detection model just answers the question "is there a Morse code signal at this frequency?"
 We can run it in parallel on an entire 5-second window of spectrum.
@@ -45,8 +66,7 @@ We can run it in parallel on an entire 5-second window of spectrum.
 The model uses multiple Conv1D layers with 64 x 7 filters.
 
 
-Translation Model
---
+## Translation Model
 
 For translation, we use Conv1D layers, the last layer having exactly as many filters as target characters (A-Z, 0-9, space), plus one for "no character", 39 values in all.
 
@@ -57,47 +77,5 @@ The final layer is a TimeDistributed Dense layer to classify each bin -> symbol,
 It's uncommon that symbols would share the same bin, but if so, the later one is moved the adjacent bin.
 We don't try to decode symbols that aren't completely contained within the window.
 
-
-Older Notes
---
-
-limited training set at first:
-- [CQ] <callsign>
-- <callsign> [73 | RRR]
-- <callsign> <gridsquare>
-- <callsign> [R][+-]<num>
-- noise or random letters
-
-<callsign>:
-	\d?[A-Z]{1,2}\d{1,4}[A-Z]{1,4}
-	(type 1/2 compound callsigns?)
-
-input: normalized spectral data (do we need I/Q?)
-what if signal spans 2 bins? (take most likely bin? use adjacent bins?)
-50% overlap fft?
-
-https://github.com/jj1bdx/wspr-cui
-
-https://physics.princeton.edu//pulsar/K1JT/JT65.pdf
-
-
-T = 1200/WPM = 17 msec ~= 20 msec
-downsample to 10 msec (100 samples/sec)
-- wspr is 375 frames/sec
-random slice
-need about 200 bits for input
-handle up to 15 chars - 750?
-
-output: [ A-Z0-9+-/]
-0-15 chars
-
-dot = 1/1
-dash = 3/1
-space = 3
-word = 7
-
-variability? maybe 0-30%? 
-
-record actual hits to add to corpus, submit to server
-
+Before translation, if we see CW data in two adjacent bins (frequencies) we will merge them.
 
