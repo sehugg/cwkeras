@@ -1,6 +1,7 @@
 
 import morse, keras
 import numpy as np
+from scipy import signal
 
 channels = 1
 samples_per_sec = 100
@@ -185,4 +186,66 @@ class TranslationGenerator(keras.utils.Sequence):
 
     def on_epoch_end(self):
         'Updates indexes after each epoch'
+
+
+class CWDetectorTranslator:
+    def __init__(self, sample_rate):
+        self.sr = sample_rate
+        self.nsamples = int(sample_rate * max_seconds / 2 / 1.24) # TODO: 1.24 for 3/4 window overlap
+        self.wnd = np.zeros((self.nsamples * 2,))
+        self.detections = []
+
+        detect_checkpoint_fn = "best_model.h5"
+        self.detect_model = make_model()
+        self.detect_model.load_weights(detect_checkpoint_fn)
+
+        trans_checkpoint_fn = "best_trans_model.h5"
+        self.trans_model = make_trans_model()
+        self.trans_model.load_weights(trans_checkpoint_fn)
+
+    def add_samples(self, samples):
+        # shift window by 1/2
+        n = self.nsamples
+        self.wnd[0:n] = self.wnd[n:]
+        # add new samples
+        self.wnd[n:] = samples
+        # min/max
+        frequencies, times, spectrogram = signal.spectrogram(self.wnd, fs=self.sr, nperseg=256, noverlap=192)
+        self.spec = spectrogram
+        
+    def detect(self):
+        xy = self.spec[:, 0:max_samples]
+        # normalize spectrogram
+        ymin = np.min(xy, axis=1)
+        ymax = np.max(xy, axis=1)
+        xy = (xy - ymin[:,None]) / (ymax - ymin + 1e-6)[:,None]
+        self.xy = xy
+        xy = np.reshape(xy, (xy.shape[0], xy.shape[1], 1))
+        p = self.detect_model.predict(xy[:, 0:max_samples])
+        self.detections = np.argwhere(p > 0.5)
+        # combine adjacent bins
+        for i in range(0, len(self.detections)-1):
+            y = self.detections[i][0]
+            if y == self.detections[i+1][0] - 1:
+                #self.xy[y+1] = np.maximum(self.xy[y], self.xy[y+1])
+                self.xy[y+1] = (self.xy[y] + self.xy[y+1]) / 2
+                self.detections[i] = (-1,-1)
+
+    def translate(self):
+        results = []
+        for y,i in self.detections:
+            if y >= 0:
+                row = self.xy[y]
+                row = np.reshape(row, (1, row.shape[0], 1))
+                t = self.trans_model.predict(row)[0]
+                nbins = t.shape[0]
+                # pick the best choice for each bin
+                msg = ['.'] * nbins
+                for j in range(0, nbins):
+                    k = np.argmax(t[j])
+                    if k>0:
+                        msg[j] = TOKENS[k]
+                res = (y, ''.join(msg))
+                results.append(res)
+        return results
 

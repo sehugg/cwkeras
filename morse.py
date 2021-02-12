@@ -57,8 +57,6 @@ def generate_signal(msg):
     samp, posns = generate_morse_samples(bits, symlen, variance, drift)
     if not isfake and len(msg) > 0:
         assert(len(posns) == len(msg)+1)
-    # simulate 50% windowing
-    samp = np.convolve(samp, [1/4, 1/2, 1/4])
     return samp, posns
 
 def generate_signoise(msg, MAXSAMP):
@@ -77,13 +75,21 @@ def generate_signoise(msg, MAXSAMP):
         sig = sig[ofs:ofs+MAXSAMP]
         posns += MAXSAMP//2 - ofs
     assert(sig.shape == (MAXSAMP,))
+    # generate random noise
     noise = np.random.normal(0, 1, (MAXSAMP,))
     # TODO: snr proportional to bitrate
-    #snr = MIN_SNR + MAX_SNR / bpc
+    # mix signal and noises (multiplicative and additive)
     snr2 = MIN_SNR + random.random() * (MAX_SNR-MIN_SNR)
     multnoise = np.random.normal(1, 1.0/snr2, (MAXSAMP,))
     snr = MIN_SNR + random.random() * (MAX_SNR-MIN_SNR)
-    return sig * multnoise * snr + noise, posns
+    signoise = sig * multnoise * snr + noise
+    # simulate 50% windowing
+    signoise = np.convolve(signoise, [1/4, 1/2, 1/4], mode='same')
+    return signoise, posns
+
+def normalize(y):
+    return (y-min(y))/(max(y)-min(y))
+    #normalized = (y - y.mean(axis=0)) / y.std(axis=0)
 
 def generate_detection_training_sample(MAXSAMP, noempty=False):
     r = random.random()
@@ -92,16 +98,15 @@ def generate_detection_training_sample(MAXSAMP, noempty=False):
         if r > 0.9:
             msg = rstr.xeger(r'(CQ )?\d?[A-Z]{1,2}\d{1,4}[A-Z]{1,4}( [A-R][A-R][0-9][0-9])?')
         else:
-            msg = rstr.xeger(r'[A-Z0-9]{3,12} [A-Z0-9]{3,12}')
+            msg = rstr.xeger(r'[A-Z0-9]{3,12}( [A-Z0-9]{1,12})?( [A-Z0-9]{1,12})?')
     elif r > 0.25:
         # fake msg
-        msg = '~' + rstr.xeger(r'[0-1]{30,200}')
+        msg = '~' + rstr.xeger(r'[0-1]{30,300}')
     else:
         # no msg, just noise
         msg = ''
     y, posns = generate_signoise(msg, MAXSAMP)
-    normalized = (y-min(y))/(max(y)-min(y))
-    #normalized = (y - y.mean(axis=0)) / y.std(axis=0)
+    normalized = normalize(y)
     return (msg, normalized, posns)
 
 def generate_translation_training_sample(MAXSAMP):
@@ -111,9 +116,7 @@ def generate_translation_training_sample(MAXSAMP):
     else:
         msg = rstr.xeger(r'[A-Z0-9]{1,12}( [A-Z0-9]{1,12})?( [A-Z0-9]{1,12})?')
     y, posns = generate_signoise(msg, MAXSAMP)
-    # TODO: only return words in window?
-    normalized = (y-min(y))/(max(y)-min(y))
-    #normalized = (y - y.mean(axis=0)) / y.std(axis=0)
+    normalized = normalize(y)
     return (msg, normalized, posns)
 
 if __name__ == "__main__":
@@ -122,8 +125,8 @@ if __name__ == "__main__":
         nex = 25
         im = []
         for i in range(0,nex):
-            #msg,y,posns = generate_detection_training_sample(500)
-            msg,y,posns = generate_translation_training_sample(500)
+            msg,y,posns = generate_detection_training_sample(500)
+            #msg,y,posns = generate_translation_training_sample(500)
             im.append(y)
             im.append(np.zeros(len(y)))
         im = np.array(im)
