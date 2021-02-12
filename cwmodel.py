@@ -25,25 +25,24 @@ def make_model(input_shape = (max_samples,channels)):
     conv1 = keras.layers.BatchNormalization()(conv1)
     conv1 = keras.layers.MaxPooling1D()(conv1)
     conv1 = keras.layers.ReLU()(conv1)
-    conv1 = keras.layers.Dropout(0.5)(conv1)
+    conv1 = keras.layers.Dropout(0.3)(conv1)
 
     conv2 = keras.layers.Conv1D(filters=nf, kernel_size=ks, padding="same")(conv1)
     conv2 = keras.layers.BatchNormalization()(conv2)
     conv2 = keras.layers.MaxPooling1D()(conv2)
     conv2 = keras.layers.ReLU()(conv2)
-    conv2 = keras.layers.Dropout(0.4)(conv2)
+    conv2 = keras.layers.Dropout(0.2)(conv2)
 
     conv3 = keras.layers.Conv1D(filters=nf, kernel_size=ks, padding="same")(conv2)
     conv3 = keras.layers.BatchNormalization()(conv3)
     conv3 = keras.layers.MaxPooling1D()(conv3)
     conv3 = keras.layers.ReLU()(conv3)
-    conv3 = keras.layers.Dropout(0.3)(conv3)
+    conv3 = keras.layers.Dropout(0.1)(conv3)
 
     conv4 = keras.layers.Conv1D(filters=nf, kernel_size=ks, padding="same")(conv3)
     conv4 = keras.layers.BatchNormalization()(conv4)
     conv4 = keras.layers.MaxPooling1D()(conv4)
     conv4 = keras.layers.ReLU()(conv4)
-    conv4 = keras.layers.Dropout(0.2)(conv4)
 
     conv5 = keras.layers.Conv1D(filters=nf, kernel_size=ks, padding="same")(conv4)
 
@@ -58,23 +57,23 @@ def make_model(input_shape = (max_samples,channels)):
 def make_trans_model(input_shape = (trans_samples,channels)):
     input_layer = keras.layers.Input(input_shape)
     nf = 128
-    ks = 5
+    ks = 7
 
     conv1 = keras.layers.Conv1D(filters=nf, kernel_size=ks, padding="same")(input_layer)
     conv1 = keras.layers.BatchNormalization()(conv1)
-    conv1 = keras.layers.MaxPooling1D()(conv1)
+    conv1 = keras.layers.AveragePooling1D()(conv1)
     conv1 = keras.layers.ReLU()(conv1)
-    conv1 = keras.layers.Dropout(0.6)(conv1)
+    conv1 = keras.layers.Dropout(0.2)(conv1)
 
     conv2 = keras.layers.Conv1D(filters=nf, kernel_size=ks, padding="same")(conv1)
     conv2 = keras.layers.BatchNormalization()(conv2)
-    conv2 = keras.layers.MaxPooling1D()(conv2)
+    conv2 = keras.layers.AveragePooling1D()(conv2)
     conv2 = keras.layers.ReLU()(conv2)
-    conv2 = keras.layers.Dropout(0.4)(conv2)
+    conv2 = keras.layers.Dropout(0.1)(conv2)
 
     conv3 = keras.layers.Conv1D(filters=nf, kernel_size=ks, padding="same")(conv2)
     conv3 = keras.layers.BatchNormalization()(conv3)
-    conv3 = keras.layers.MaxPooling1D()(conv3)
+    conv3 = keras.layers.AveragePooling1D()(conv3)
     conv3 = keras.layers.ReLU()(conv3)
 
     if use_lstm:
@@ -82,7 +81,10 @@ def make_trans_model(input_shape = (trans_samples,channels)):
         lstm2 = keras.layers.LSTM(num_decoder_tokens, return_sequences=True)(lstm1)
         return keras.models.Model(inputs=input_layer, outputs=lstm2)
     else:
-        conv8 = keras.layers.Conv1D(filters=nf, kernel_size=ks, activation="relu", padding="same")(conv3)
+        conv7 = keras.layers.Conv1D(filters=nf, kernel_size=ks, activation="relu", padding="same")(conv3)
+        #conv7 = keras.layers.BatchNormalization()(conv7)
+        #conv8 = keras.layers.Conv1D(filters=num_decoder_tokens*2, kernel_size=3, activation="relu", padding="same")(conv7)
+        conv8 = keras.layers.TimeDistributed(keras.layers.Dense(nf*2, activation="relu"))(conv7)
         dense = keras.layers.TimeDistributed(keras.layers.Dense(num_decoder_tokens, activation="softmax"))(conv8)
         return keras.models.Model(inputs=input_layer, outputs=dense)
 
@@ -156,26 +158,26 @@ class TranslationGenerator(keras.utils.Sequence):
             x = np.reshape(x, (-1,1))
             y = np.zeros((max_translation_length, num_decoder_tokens))
             str = ['.'] * max_translation_length
-            empty = set(range(0,max_translation_length))
+            # iterate over all bins
             for i, char in enumerate(msg):
                 if use_lstm:
+                    # lstm, symbols line up against left side
                     pos = i
                     ofs = i
                 else:
                     # put bin smack dab in middle of the feature
                     pos = ((posns[i] + posns[i+1]) / trans_samples / 2) * (max_translation_length-2)
-                    ofs = int(pos)
-                while ofs < max_translation_length and not ofs in empty:
-                    ofs += 1
-                if ofs >= 0 and ofs < max_translation_length and posns[i] > 0 and posns[i+1] < trans_samples:
-                    empty.remove(ofs)
+                    ofs = int(round(pos))
+                # is this symbol in the window?
+                if ofs > 0 and ofs < max_translation_length-1 and posns[i] > 0 and posns[i+1] < trans_samples:
                     tti = target_token_index[msg[i]]
-                    y[ofs+0, tti] = 1
+                    y[ofs-1, tti] = 1/3
+                    y[ofs+0, tti] = 1/1
+                    y[ofs+1, tti] = 1/3
                     str[ofs] = char
-                else:
-                    pass #print(ofs, msg, ''.join(str))
-            for ofs in empty:
-                y[ofs, 0] = 1.0
+            # set "no symbol" probability for bins
+            for ofs in range(0,max_translation_length):
+                y[ofs, 0] = max(0.0, 1.0 - np.sum(y[ofs]))
             x_train.append(x)
             y_train.append(y)
             #print(''.join(str))

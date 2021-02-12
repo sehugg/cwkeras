@@ -21,7 +21,7 @@ callbacks = [
 #opt = keras.optimizers.SGD(lr=0.01)
 model.compile(
     optimizer="adam",
-    loss="categorical_crossentropy",
+    loss=keras.losses.kullback_leibler_divergence, #"categorical_crossentropy",
     metrics=["accuracy"],
 )
 try:

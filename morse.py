@@ -84,10 +84,9 @@ def generate_signoise(msg, MAXSAMP):
     return sig * snr + noise, posns
 
 def generate_detection_training_sample(MAXSAMP, noempty=False):
-    msg = ''
     r = random.random()
     if r > 0.5 or noempty:
-        # cq? callsign grid?
+        # cq? callsign? grid square?
         if r > 0.9:
             msg = rstr.xeger(r'(CQ )?\d?[A-Z]{1,2}\d{1,4}[A-Z]{1,4}( [A-R][A-R][0-9][0-9])?')
         else:
@@ -104,9 +103,12 @@ def generate_detection_training_sample(MAXSAMP, noempty=False):
     return (msg, normalized, posns)
 
 def generate_translation_training_sample(MAXSAMP):
-    msg = rstr.xeger(r'[A-Z]{1,2}\d{1,2}[A-Z]{1,4}')
+    r = random.random()
+    if r > 0.9:
+        msg = rstr.xeger(r'(CQ )?\d?[A-Z]{1,2}\d{1,4}[A-Z]{1,4}( [A-R][A-R][0-9][0-9])?')
+    else:
+        msg = rstr.xeger(r'[A-Z0-9]{1,12}( [A-Z0-9]{1,12})?( [A-Z0-9]{1,12})?')
     y, posns = generate_signoise(msg, MAXSAMP)
-    toks = msg.split(' ')
     # TODO: only return words in window?
     normalized = (y-min(y))/(max(y)-min(y))
     #normalized = (y - y.mean(axis=0)) / y.std(axis=0)
