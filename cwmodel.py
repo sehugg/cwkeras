@@ -172,9 +172,9 @@ class TranslationGenerator(keras.utils.Sequence):
                 # is this symbol in the window?
                 if ofs > 0 and ofs < max_translation_length-1 and posns[i] > 0 and posns[i+1] < trans_samples:
                     tti = target_token_index[msg[i]]
-                    y[ofs-1, tti] = 1/4
+                    y[ofs-1, tti] = 1/3
                     y[ofs+0, tti] = 1/1
-                    y[ofs+1, tti] = 1/4
+                    y[ofs+1, tti] = 1/3
                     str[ofs] = char
             # set "no symbol" probability for bins
             for ofs in range(0,max_translation_length):
@@ -189,10 +189,11 @@ class TranslationGenerator(keras.utils.Sequence):
 
 
 class CWDetectorTranslator:
-    def __init__(self, sample_rate):
+    def __init__(self, sample_rate, overlap=0.5):
         self.sr = sample_rate
-        self.nsamples = int(sample_rate * max_seconds / 2 * 1.61) # TODO: 1.24 for 3/4 window overlap
-        self.wnd = np.zeros((self.nsamples * 2,))
+        self.overlap = overlap
+        self.nsamples = int((128 * (1-overlap) + 1) * max_samples / 2)
+        self.wnd = np.zeros((self.nsamples * 8,))
         self.detections = []
 
         detect_checkpoint_fn = "best_model.h5"
@@ -209,12 +210,15 @@ class CWDetectorTranslator:
         self.wnd[0:-n] = self.wnd[n:]
         # add new samples
         self.wnd[-n:] = samples
-        # min/max
-        frequencies, times, spectrogram = signal.spectrogram(self.wnd, fs=self.sr, nperseg=256, noverlap=128)
-        self.spec = spectrogram
+        # convert to spectrogram at three different scales
+        specs = []
+        for nps in [512,256,128]:
+            frequencies, times, spectrogram = signal.spectrogram(self.wnd, fs=self.sr, nperseg=nps, noverlap=int(nps*self.overlap))
+            specs.append(spectrogram[:, 0:max_samples])
+        self.spec = np.concatenate(specs, axis=0)
         
     def detect(self):
-        xy = self.spec[:, 0:max_samples]
+        xy = self.spec #[:, 0:max_samples]
         # normalize spectrogram
         ymin = np.min(xy, axis=1)
         ymax = np.max(xy, axis=1)
@@ -238,14 +242,16 @@ class CWDetectorTranslator:
                 row = self.xy[y]
                 row = np.reshape(row, (1, row.shape[0], 1))
                 t = self.trans_model.predict(row)[0]
-                nbins = t.shape[0]
-                # pick the best choice for each bin
-                msg = ['.'] * nbins
-                for j in range(0, nbins):
-                    k = np.argmax(t[j])
-                    if k>0:
-                        msg[j] = TOKENS[k]
-                res = (y, ''.join(msg))
-                results.append(res)
+                results.append((y, bins2msg(t)))
         return results
+
+def bins2msg(t):
+    nbins = t.shape[0]
+    # pick the best choice for each bin
+    msg = ['.'] * nbins
+    for j in range(0, nbins):
+        k = np.argmax(t[j])
+        if k>0:
+            msg[j] = TOKENS[k]
+    return ''.join(msg)
 

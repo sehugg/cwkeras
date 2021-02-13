@@ -16,7 +16,7 @@ for fn in fns:
     sample_rate, samples = wavfile.read(fn)
     print(fn, sample_rate, len(samples))
     if cw is None:
-        cw = cwmodel.CWDetectorTranslator(sample_rate)
+        cw = cwmodel.CWDetectorTranslator(sample_rate, overlap=3/4)
     cw.add_samples(samples[0:cw.nsamples])
     cw.add_samples(samples[cw.nsamples:cw.nsamples*2])
     cw.detect()
