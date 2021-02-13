@@ -14,7 +14,7 @@ TOKENS = "$^0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ "
 num_decoder_tokens = len(TOKENS)
 target_token_index = dict([(char, i) for i, char in enumerate(TOKENS)])
 max_translation_length = 62
-use_lstm = False
+use_lstm = True
 
 # detection model
 def make_model(input_shape = (max_samples,channels)):
@@ -78,16 +78,13 @@ def make_trans_model(input_shape = (trans_samples,channels)):
     conv3 = keras.layers.ReLU()(conv3)
 
     if use_lstm:
-        lstm1 = keras.layers.LSTM(nf, go_backwards=True, return_sequences=True)(conv3)
-        lstm2 = keras.layers.LSTM(num_decoder_tokens, return_sequences=True)(lstm1)
-        return keras.models.Model(inputs=input_layer, outputs=lstm2)
+        conv7 = keras.layers.LSTM(nf, return_sequences=True)(conv3)
     else:
         conv7 = keras.layers.Conv1D(filters=nf, kernel_size=ks, activation="relu", padding="same")(conv3)
-        #conv7 = keras.layers.BatchNormalization()(conv7)
-        #conv8 = keras.layers.Conv1D(filters=num_decoder_tokens*2, kernel_size=3, activation="relu", padding="same")(conv7)
-        conv8 = keras.layers.TimeDistributed(keras.layers.Dense(nf*2, activation="relu"))(conv7)
-        dense = keras.layers.TimeDistributed(keras.layers.Dense(num_decoder_tokens, activation="softmax"))(conv8)
-        return keras.models.Model(inputs=input_layer, outputs=dense)
+
+    conv8 = keras.layers.TimeDistributed(keras.layers.Dense(nf*2, activation="relu"))(conv7)
+    dense = keras.layers.TimeDistributed(keras.layers.Dense(num_decoder_tokens, activation="softmax"))(conv8)
+    return keras.models.Model(inputs=input_layer, outputs=dense)
 
     #encoder_lstm = keras.layers.LSTM(latent_dim, return_sequences=True, dropout=0.1)(conv5)
     #decoder_lstm = keras.layers.LSTM(num_decoder_tokens, dropout=0.1, return_sequences=True)(encoder_lstm)
