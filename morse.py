@@ -2,7 +2,7 @@ import rstr, math, random, re
 import morse_talk as mtalk
 import numpy as np
 
-MIN_SIGNAL_LENGTH = 1
+MIN_SIGNAL_LENGTH = 2
 MAX_SIGNAL_LENGTH = 5
 MIN_SNR = 2
 MAX_SNR = 20
