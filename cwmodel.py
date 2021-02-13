@@ -186,9 +186,10 @@ class TranslationGenerator(keras.utils.Sequence):
 
 
 class CWDetectorTranslator:
-    def __init__(self, sample_rate, overlap=0.5):
+    def __init__(self, sample_rate, overlap=0.5, wndsizes=[512,256,128]):
         self.sr = sample_rate
         self.overlap = overlap
+        self.wndsizes = wndsizes
         self.nsamples = int((128 * (1-overlap) + 1) * max_samples / 2)
         self.wnd = np.zeros((self.nsamples * 8,))
         self.detections = []
@@ -212,7 +213,7 @@ class CWDetectorTranslator:
         self.wnd[-n:] = samples
         # convert to spectrogram at three different scales
         specs = []
-        for nps in [512,256,128]:
+        for nps in self.wndsizes:
             nov = int(nps * self.overlap)
             wndsamp = max_samples * (nps-nov+1)
             w = self.wnd[0:wndsamp]

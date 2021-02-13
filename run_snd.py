@@ -17,6 +17,8 @@ while True:
     cw.add_samples(samples)
     cw.detect()
     reslist = cw.translate()
-    for r in reslist:
-        print(r[0], r[1])
+    if len(reslist):
+        for r in reslist:
+            print(r[0], r[1])
+        print("---")
 

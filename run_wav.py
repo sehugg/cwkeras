@@ -24,6 +24,7 @@ for fn in fns:
         reslist = cw.translate()
         for r in reslist:
             print(r[0], r[1])
+        print('---')
 
     plt.subplot(211, label=fn)
     plt.pcolormesh(cw.spec, shading='auto')
