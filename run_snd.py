@@ -9,6 +9,7 @@ sd.default.samplerate = sample_rate #//2
 sd.default.channels = 1
 
 cw = cwmodel.CWDetectorTranslator(sample_rate)
+print("Listening...")
 
 while True:
     samples = sd.rec(cw.nsamples, blocking=True)

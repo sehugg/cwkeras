@@ -17,12 +17,13 @@ for fn in fns:
     print(fn, sample_rate, len(samples))
     if cw is None:
         cw = cwmodel.CWDetectorTranslator(sample_rate, overlap=3/4)
-    cw.add_samples(samples[0:cw.nsamples])
-    cw.add_samples(samples[cw.nsamples:cw.nsamples*2])
-    cw.detect()
-    reslist = cw.translate()
-    for r in reslist:
-        print(r[0], r[1])
+    cw.clear()
+    for i in range(0, len(samples), cw.nsamples):
+        cw.add_samples(samples[i:i+cw.nsamples])
+        cw.detect()
+        reslist = cw.translate()
+        for r in reslist:
+            print(r[0], r[1])
 
     plt.subplot(211, label=fn)
     plt.pcolormesh(cw.spec, shading='auto')

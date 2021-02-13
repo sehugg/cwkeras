@@ -201,6 +201,9 @@ class CWDetectorTranslator:
         self.trans_model = make_trans_model()
         self.trans_model.load_weights(trans_checkpoint_fn)
 
+    def clear(self):
+        self.wnd[:] = 0
+
     def add_samples(self, samples):
         # shift window by 1/2
         n = len(samples)
