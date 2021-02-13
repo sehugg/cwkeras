@@ -213,7 +213,10 @@ class CWDetectorTranslator:
         # convert to spectrogram at three different scales
         specs = []
         for nps in [512,256,128]:
-            frequencies, times, spectrogram = signal.spectrogram(self.wnd, fs=self.sr, nperseg=nps, noverlap=int(nps*self.overlap))
+            nov = int(nps * self.overlap)
+            wndsamp = max_samples * (nps-nov+1)
+            w = self.wnd[0:wndsamp]
+            frequencies, times, spectrogram = signal.spectrogram(w, fs=self.sr, nperseg=nps, noverlap=nov)
             specs.append(spectrogram[:, 0:max_samples])
         self.spec = np.concatenate(specs, axis=0)
         
