@@ -163,13 +163,16 @@ class TranslationGenerator(keras.utils.Sequence):
                 if use_lstm:
                     # lstm, bin goes at end of symbol
                     pos = posns[i+1] / trans_samples * max_translation_length
-                    ofs = int(round(pos))+1
+                    ofs = int(round(pos))
                 else:
                     # put bin smack dab in middle of the feature
                     pos = ((posns[i] + posns[i+1]) / trans_samples / 2) * max_translation_length
                     ofs = int(round(pos))
                 # is this symbol in the window?
                 if ofs > 0 and ofs < max_translation_length-1 and posns[i] > 0 and posns[i+1] < trans_samples:
+                    # try to align with lower energy bin
+                    if x[ofs+1] < x[ofs]:
+                        ofs += 1
                     tti = target_token_index[msg[i]]
                     #y[ofs-1, tti] = 1/3
                     y[ofs+0, tti] = 1/1
