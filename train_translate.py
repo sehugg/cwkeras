@@ -4,7 +4,7 @@ import morse
 import numpy as np
 import cwmodel
 
-checkpoint_fn = "best_trans_model.h5"
+checkpoint_fn = "weights_translate.h5"
 
 model = cwmodel.make_trans_model()
 model.summary()

@@ -4,7 +4,7 @@ import morse
 import numpy as np
 import cwmodel
 
-checkpoint_fn = "best_model.h5"
+checkpoint_fn = "weights_detect.h5"
 
 model = cwmodel.make_model()
 model.summary()

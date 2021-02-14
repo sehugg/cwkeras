@@ -194,11 +194,11 @@ class CWDetectorTranslator:
         self.wnd = np.zeros((self.nsamples * 8,))
         self.detections = []
 
-        detect_checkpoint_fn = "best_model.h5"
+        detect_checkpoint_fn = "weights_detect.h5"
         self.detect_model = make_model()
         self.detect_model.load_weights(detect_checkpoint_fn)
 
-        trans_checkpoint_fn = "best_trans_model.h5"
+        trans_checkpoint_fn = "weights_translate.h5"
         self.trans_model = make_trans_model()
         self.trans_model.load_weights(trans_checkpoint_fn)
 
