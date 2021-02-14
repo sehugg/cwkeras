@@ -4,7 +4,7 @@ import numpy as np
 import cwmodel
 import sounddevice as sd
 
-sample_rate = 8000
+sample_rate = 4000
 sd.default.samplerate = sample_rate #//2
 sd.default.channels = 1
 

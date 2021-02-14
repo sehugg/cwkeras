@@ -14,10 +14,12 @@ cw = None
 
 for fn in fns:
     sample_rate, samples = wavfile.read(fn)
+    samples = signal.resample(samples, len(samples)//2)
     print(fn, sample_rate, len(samples))
     if cw is None:
         cw = cwmodel.CWDetectorTranslator(sample_rate, overlap=3/4)
     cw.clear()
+    samples = np.pad(samples, (0, cw.nsamples*5))
     for i in range(0, len(samples), cw.nsamples):
         cw.add_samples(samples[i:i+cw.nsamples])
         cw.detect()
