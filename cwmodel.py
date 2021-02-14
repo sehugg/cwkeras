@@ -110,7 +110,7 @@ def make_trans_model(input_shape = (trans_samples,channels)):
 
 class DataGenerator(keras.utils.Sequence):
     'Generates detection data for Keras'
-    def __init__(self, batch_size=128):
+    def __init__(self, batch_size=256):
         'Initialization'
         self.dim = (batch_size,max_samples,channels)
         self.batch_size = batch_size
@@ -138,7 +138,7 @@ class DataGenerator(keras.utils.Sequence):
 
 class TranslationGenerator(keras.utils.Sequence):
     'Generates detection data for Keras'
-    def __init__(self, batch_size=128):
+    def __init__(self, batch_size=256):
         'Initialization'
         self.dim = (batch_size,trans_samples,channels)
         self.batch_size = batch_size
