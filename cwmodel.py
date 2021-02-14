@@ -169,9 +169,9 @@ class TranslationGenerator(keras.utils.Sequence):
                 # is this symbol in the window?
                 if ofs > 0 and ofs < max_translation_length-1 and posns[i] > 0 and posns[i+1] < trans_samples:
                     tti = target_token_index[msg[i]]
-                    y[ofs-1, tti] = 1/3
+                    #y[ofs-1, tti] = 1/3
                     y[ofs+0, tti] = 1/1
-                    y[ofs+1, tti] = 1/3
+                    #y[ofs+1, tti] = 1/3
                     str[ofs] = char
             # set "no symbol" probability for bins
             for ofs in range(0,max_translation_length):
