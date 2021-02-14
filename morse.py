@@ -83,8 +83,9 @@ def generate_signoise(msg, MAXSAMP):
     multnoise = np.random.normal(1, 1.0/snr2, (MAXSAMP,))
     snr = MIN_SNR + random.random() * (MAX_SNR-MIN_SNR)
     signoise = sig * multnoise * snr + noise
-    # simulate 50% windowing
-    signoise = np.convolve(signoise, [1/4, 1/2, 1/4], mode='same')
+    # simulate 0% - 50% windowing
+    k = random.random() * 0.5
+    signoise = np.convolve(signoise, [k/2, 1-k, k/2], mode='same')
     return signoise, posns
 
 def normalize(y):
