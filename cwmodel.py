@@ -57,8 +57,8 @@ def make_model(input_shape = (max_samples,channels)):
 # https://keras.io/examples/nlp/lstm_seq2seq/
 def make_trans_model(input_shape = (trans_samples,channels)):
     input_layer = keras.layers.Input(input_shape)
-    nf = 96
-    ks = 7
+    nf = 64
+    ks = 5
 
     conv1 = keras.layers.Conv1D(filters=nf, kernel_size=ks, padding="same")(input_layer)
     conv1 = keras.layers.BatchNormalization()(conv1)
@@ -79,12 +79,13 @@ def make_trans_model(input_shape = (trans_samples,channels)):
     conv3 = keras.layers.Dropout(0.2)(conv3)
 
     if use_lstm:
-        conv7 = keras.layers.LSTM(nf, return_sequences=True)(conv3)
+        conv8 = keras.layers.LSTM(nf*2, return_sequences=True)(conv3)
     else:
         conv7 = keras.layers.Conv1D(filters=nf, kernel_size=ks, activation="relu", padding="same")(conv3)
+        conv8 = keras.layers.TimeDistributed(keras.layers.Dense(nf*2, activation="relu"))(conv7)
 
-    conv8 = keras.layers.TimeDistributed(keras.layers.Dense(nf*2, activation="relu"))(conv7)
-    dense = keras.layers.TimeDistributed(keras.layers.Dense(num_decoder_tokens, activation="softmax"))(conv8)
+    concat = keras.layers.Concatenate(axis=2)([conv3, conv8])
+    dense = keras.layers.TimeDistributed(keras.layers.Dense(num_decoder_tokens, activation="softmax"))(concat)
     return keras.models.Model(inputs=input_layer, outputs=dense)
 
     #encoder_lstm = keras.layers.LSTM(latent_dim, return_sequences=True, dropout=0.1)(conv5)

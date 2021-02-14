@@ -14,7 +14,7 @@ callbacks = [
         checkpoint_fn, save_best_only=True, monitor="loss"
     ),
     keras.callbacks.ReduceLROnPlateau(
-        monitor="loss", factor=0.5, patience=20, min_lr=0.0001
+        monitor="loss", factor=0.5, patience=10, min_lr=0.0001
     ),
     keras.callbacks.EarlyStopping(monitor="loss", patience=50, verbose=1),
 ]
