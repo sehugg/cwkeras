@@ -64,18 +64,19 @@ def make_trans_model(input_shape = (trans_samples,channels)):
     conv1 = keras.layers.BatchNormalization()(conv1)
     conv1 = keras.layers.AveragePooling1D()(conv1)
     conv1 = keras.layers.ReLU()(conv1)
-    conv1 = keras.layers.Dropout(0.2)(conv1)
+    conv1 = keras.layers.Dropout(0.6)(conv1)
 
     conv2 = keras.layers.Conv1D(filters=nf, kernel_size=ks, padding="same")(conv1)
     conv2 = keras.layers.BatchNormalization()(conv2)
     conv2 = keras.layers.AveragePooling1D()(conv2)
     conv2 = keras.layers.ReLU()(conv2)
-    conv2 = keras.layers.Dropout(0.1)(conv2)
+    conv2 = keras.layers.Dropout(0.4)(conv2)
 
     conv3 = keras.layers.Conv1D(filters=nf, kernel_size=ks, padding="same")(conv2)
     conv3 = keras.layers.BatchNormalization()(conv3)
     conv3 = keras.layers.AveragePooling1D()(conv3)
     conv3 = keras.layers.ReLU()(conv3)
+    conv1 = keras.layers.Dropout(0.2)(conv1)
 
     if use_lstm:
         conv7 = keras.layers.LSTM(nf, return_sequences=True)(conv3)

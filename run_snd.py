@@ -13,7 +13,7 @@ print("Listening...")
 
 while True:
     samples = sd.rec(cw.nsamples, blocking=True)
-    samples = np.reshape(samples, (cw.nsamples,))
+    samples = np.reshape(samples, (samples.shape[0],))
     cw.add_samples(samples)
     cw.detect()
     reslist = cw.translate()
