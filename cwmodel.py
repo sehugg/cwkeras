@@ -76,7 +76,7 @@ def make_trans_model(input_shape = (trans_samples,channels)):
     conv3 = keras.layers.BatchNormalization()(conv3)
     conv3 = keras.layers.AveragePooling1D()(conv3)
     conv3 = keras.layers.ReLU()(conv3)
-    conv1 = keras.layers.Dropout(0.2)(conv1)
+    conv3 = keras.layers.Dropout(0.2)(conv3)
 
     if use_lstm:
         conv7 = keras.layers.LSTM(nf, return_sequences=True)(conv3)
