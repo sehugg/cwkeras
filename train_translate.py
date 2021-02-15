@@ -9,7 +9,7 @@ checkpoint_fn = "weights_translate.h5"
 try:
     from google.colab import drive
     drive.mount('/content/drive')
-    checkpoint_fn = '/content/drive/' + checkpoint_fn
+    checkpoint_fn = '/content/drive/MyDrive/Colab Notebooks/' + checkpoint_fn
 except:
     print("Couldn't mount Google Colab Drive")
 
@@ -34,7 +34,7 @@ model.compile(
 try:
     model.load_weights(checkpoint_fn)
 except:
-    print("could not load weights")
+    print("could not load weights", checkpoint_fn)
 
 training_generator = cwmodel.TranslationGenerator()
 validation_generator = cwmodel.TranslationGenerator()
