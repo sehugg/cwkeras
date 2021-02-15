@@ -20,7 +20,7 @@ use_lstm = True
 def make_model(input_shape = (max_samples,channels)):
     input_layer = keras.layers.Input(input_shape)
     nf = 64
-    ks = 7
+    ks = 5
 
     conv1 = keras.layers.Conv1D(filters=nf, kernel_size=ks, padding="same")(input_layer)
     conv1 = keras.layers.BatchNormalization()(conv1)
@@ -44,8 +44,12 @@ def make_model(input_shape = (max_samples,channels)):
     conv4 = keras.layers.BatchNormalization()(conv4)
     conv4 = keras.layers.MaxPooling1D()(conv4)
     conv4 = keras.layers.ReLU()(conv4)
+    conv4 = keras.layers.Dropout(0.1)(conv4)
 
     conv5 = keras.layers.Conv1D(filters=nf, kernel_size=ks, padding="same")(conv4)
+    conv5 = keras.layers.BatchNormalization()(conv5)
+    conv5 = keras.layers.MaxPooling1D()(conv5)
+    conv5 = keras.layers.ReLU()(conv5)
 
     gap = keras.layers.GlobalAveragePooling1D()(conv5)
 
