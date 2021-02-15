@@ -20,7 +20,7 @@ use_lstm = True
 def make_model(input_shape = (max_samples,channels)):
     input_layer = keras.layers.Input(input_shape)
     nf = 64
-    ks = 5
+    ks = 7
 
     conv1 = keras.layers.Conv1D(filters=nf, kernel_size=ks, padding="same")(input_layer)
     conv1 = keras.layers.BatchNormalization()(conv1)
@@ -61,8 +61,8 @@ def make_model(input_shape = (max_samples,channels)):
 # https://keras.io/examples/nlp/lstm_seq2seq/
 def make_trans_model(input_shape = (trans_samples,channels)):
     input_layer = keras.layers.Input(input_shape)
-    nf = 64
-    ks = 5
+    nf = 96
+    ks = 7
 
     conv1 = keras.layers.Conv1D(filters=nf, kernel_size=ks, padding="same")(input_layer)
     conv1 = keras.layers.BatchNormalization()(conv1)
@@ -222,7 +222,7 @@ class CWDetectorTranslator:
         for nps in self.wndsizes:
             nov = int(nps * self.overlap)
             wndsamp = max_samples * (nps-nov+1)
-            w = self.wnd[0:wndsamp]
+            w = self.wnd[-wndsamp:]
             frequencies, times, spectrogram = signal.spectrogram(w, fs=self.sr, nperseg=nps, noverlap=nov)
             specs.append(spectrogram[:, 0:max_samples])
         self.spec = np.concatenate(specs, axis=0)
@@ -233,6 +233,7 @@ class CWDetectorTranslator:
         ymin = np.min(xy, axis=1)
         ymax = np.max(xy, axis=1)
         xy = (xy - ymin[:,None]) / (ymax - ymin + 1e-6)[:,None]
+        #xy = (xy - np.min(xy)) / (np.max(xy) - np.min(xy) + 1e-6)
         self.xy = xy
         xy = np.reshape(xy, (xy.shape[0], xy.shape[1], 1))
         p = self.detect_model.predict(xy[:, 0:max_samples])
