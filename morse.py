@@ -106,7 +106,17 @@ def generate_detection_training_sample(MAXSAMP, noempty=False):
     else:
         # no msg, just noise
         msg = ''
-    y, posns = generate_signoise(msg, MAXSAMP)
+    # simulate undetectable too-long signals
+    if r > 0.49 and r < 0.50:
+        global MIN_SIGNAL_LENGTH, MAX_SIGNAL_LENGTH
+        tmp = (MIN_SIGNAL_LENGTH, MAX_SIGNAL_LENGTH)
+        MIN_SIGNAL_LENGTH = MAX_SIGNAL_LENGTH + 1
+        MAX_SIGNAL_LENGTH = 30
+        y, posns = generate_signoise(msg, MAXSAMP)
+        MIN_SIGNAL_LENGTH = tmp[0]
+        MAX_SIGNAL_LENGTH = tmp[1]
+    else:
+        y, posns = generate_signoise(msg, MAXSAMP)
     normalized = normalize(y)
     return (msg, normalized, posns)
 
