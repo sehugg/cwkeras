@@ -4,10 +4,14 @@ import morse
 import numpy as np
 import cwmodel
 
-#from google.colab import drive
-#drive.mount('/content/drive')
-
 checkpoint_fn = "weights_translate.h5"
+
+try:
+    from google.colab import drive
+    drive.mount('/content/drive')
+    checkpoint_fn = '/content/drive/' + checkpoint_fn
+except:
+    print("Couldn't mount Google Colab Drive")
 
 model = cwmodel.make_trans_model()
 model.summary()
